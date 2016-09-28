@@ -41,6 +41,7 @@
 // Kanki iRODS C++ class library headers
 #include "rodsconnection.h"
 #include "rodsobjentry.h"
+#include "_rodsgenquery.h"
 
 // application headers
 #include "rodsmetadatawindow.h"
@@ -50,6 +51,8 @@
 #include "rodsdownloadthread.h"
 #include "rodsobjtreemodel.h"
 #include "rodstransferwindow.h"
+#include "rodserrorlogwindow.h"
+#include "rodsfindwindow.h"
 #include "version.h"
 
 // Qt UI compiler namespace for generated classes
@@ -70,9 +73,6 @@ public:
 
     // Qt event handler for a drag enter event. Overrides superclass virtual function.
     void dragEnterEvent(QDragEnterEvent *event);
-
-    // Qt event handler for a drag move event. Overrides superclass virtual function.
-    void dragMoveEvent(QDragMoveEvent *event);
 
     // Qt event handler for a drop event. Overrides superclass virtual function.
     void dropEvent(QDropEvent *event);
@@ -98,7 +98,7 @@ public slots:
     void endModalProgressDialog();
 
     // Qt slot for reporting an error with a message string, error string and error code.
-    void doErrorMsg(QString msgStr, QString errorStr, int errorCode);
+    void reportError(QString msgStr, QString errorStr, int errorCode);
 
     // Qt slot for setting the Kanki rods connection object for the grid browser window.
     void setConnection(Kanki::RodsConnection *newConn);
@@ -136,10 +136,10 @@ public slots:
     // Qt slot for invoking the create collection gui operation.
     void doCreateCollection();
 
-    // Qt slot for invoking the delete object gui operatio.
+    // Qt slot for invoking the delete object gui operation.
     void doDelete();
 
-    // Qt slot for invoking the open queue stat window gui operatio.
+    // Qt slot for invoking the open queue stat window gui operation.
     void doQueueStatOpen();
 
     // Qt slot for invoking the download gui operation.
@@ -147,6 +147,24 @@ public slots:
 
     // Qt slot for showing an about dialog
     void showAbout();
+
+    // Qt slot for refreshing available storage resources from the iRODS grid.
+    void refreshResources();
+
+    // Qt slot for opening error log window owned by the grid browser.
+    void openErrorLog();
+
+    // Qt slot for opening find window owned by the grid browser.
+    void openFindWindow();
+
+    // Qt slot for unregistering a find window to be destroyed.
+    void unregisterFindWindow();
+
+    // Qt slot for repoting error count to grid browser window ui.
+    void errorsReported(unsigned int errorCount);
+
+    // Qt slot for selecting an object in the browser window.
+    void selectRodsObject(QString objPath);
 
 private slots:
 
@@ -195,6 +213,23 @@ private slots:
     // qt slot which connects to upload directory triggered signal
     void on_actionUploadDirectory_triggered();
 
+    // qt slot which connects to storage resource list activated signal
+    void on_storageResc_activated(const QString &arg1);
+
+    // qt slot which connects to error log open triggered signal
+    void on_actionErrorLog_triggered();
+
+    // qt slot which connects to find action triggered signal
+    void on_actionFind_triggered();
+
+signals:
+
+    // signal for requesting object model refresh
+    void refreshObjectModelAtIndex(QModelIndex index);
+
+    // signal for adding an error to log
+    void logError(QString msgStr, QString errorStr, int errorCode);
+
 private:
 
     // gets the current user selected rods path from the gui
@@ -212,8 +247,14 @@ private:
     // our queue window instance
     RodsQueueWindow *queueWindow;
 
+    // our error log window instance
+    RodsErrorLogWindow *errorLogWindow;
+
+    // our find window instance
+    RodsFindWindow *findWindow;
+
     // a container of metadata window object pointers
-    std::map< std::string, RodsMetadataWindow*> metaEditors;
+    std::map<std::string, RodsMetadataWindow*> metaEditors;
 
     // our object tree model instance
     RodsObjTreeModel *model;
@@ -223,6 +264,9 @@ private:
 
     // settings from the gui
     bool verifyChecksum, allowOverwrite;
+
+    // current selected resource
+    std::string currentResc;
 };
 
 #endif // RODSMAINWINDOW_H

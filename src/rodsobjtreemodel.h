@@ -18,14 +18,20 @@
 #include <iostream>
 #include <string>
 
+// boost library headers
+#include "boost/tokenizer.hpp"
+
 // Qt framework headers
 #include <QApplication>
 #include <QAbstractItemModel>
 #include <QMessageBox>
 #include <QIcon>
+#include <QMimeData>
+#include <QUrl>
 
 // Kanki iRODS C++ class library headers
 #include "rodsconnection.h"
+#include "rodsobjentry.h"
 
 // application headers
 #include "rodsobjtreeitem.h"
@@ -95,17 +101,30 @@ public:
 
     // Overrides superclass virtual function for querying the capability of
     // dropping mime data into the model at given row, column and model index.
-    bool canDropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent) const;
+    bool canDropMimeData(const QMimeData *data, Qt::DropAction action,
+                         int row, int column, const QModelIndex &parent) const;
 
     // Overrides superclass virtual function for executing the drop of mime data
     // into the model at given row, column and index.
-    bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent);
+    bool dropMimeData(const QMimeData *data, Qt::DropAction action,
+                      int row, int column, const QModelIndex &parent);
+
+    // Overrides superclass virtual function for generating drag&drop mime data.
+    QMimeData* mimeData(const QModelIndexList &indexes) const;
 
     // Interface for adding an additional rods mount point to the object model.
     void addMountPoint(const std::string &path);
 
+    // Interface for resolving a rods path to an Kanki::RodsObjEntryPtr
+    Kanki::RodsObjEntryPtr resolvePathToEntry(const std::string &path);
+
+public slots:
+
     // Interface for requesting the model to refresh at a certain index.
-    void refreshChildren(const QModelIndex &parent);
+    void refreshAtIndex(QModelIndex parent);
+
+    // Qt slot for refreshing a rods collection in the object model at given path.
+    void refreshAtPath(QString path);
 
 private:
 
